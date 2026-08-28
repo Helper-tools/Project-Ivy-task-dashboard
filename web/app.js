@@ -352,12 +352,29 @@ function renderSummary() {
     .map(({ key, label, sub, value, accent }) => {
       const isActive =
         state.quickFilter === key || (key === "all" && !state.quickFilter);
+      const paymentHelp =
+        key === "paid"
+          ? `This adds up tasks that are currently Ready to Deliver or Delivered and were updated after July 29, 2026. Each one counts as $${
+              summary.paymentPerTask || 225
+            }. Your Payments page has the final amount.`
+          : "";
       return `
         <button type="button" class="metric metric-button accent-${accent}${
         isActive ? " active" : ""
-      }" data-quick="${key}">
+      }" data-quick="${key}"${
+        paymentHelp ? ` aria-label="Estimated pay. ${escapeHtml(paymentHelp)}"` : ""
+      }>
           <strong>${value}</strong>
-          <span class="metric-label">${escapeHtml(label)}</span>
+          <span class="metric-label-row">
+            <span class="metric-label">${escapeHtml(label)}</span>
+            ${
+              paymentHelp
+                ? `<span class="metric-info" aria-hidden="true">i<span class="metric-tooltip" role="tooltip">${escapeHtml(
+                    paymentHelp
+                  )}</span></span>`
+                : ""
+            }
+          </span>
           ${sub ? `<small class="metric-sub">${escapeHtml(sub)}</small>` : ""}
         </button>
       `;
