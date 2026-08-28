@@ -205,15 +205,17 @@ function ensureSession(req, res, sessions) {
   return sessionId;
 }
 
-function getHelixProject() {
+function getConfiguredProject() {
   const fallbackUrl =
-    "https://ai.joinhandshake.com/fellow/projects/past/26a53071-8843-4138-97df-430bd3e4cd45";
+    "https://ai.joinhandshake.com/fellow/aebaf7d0-8cc1-4b11-82bc-3a57a2f4ff4f/tasks";
   let projectUrl = fallbackUrl;
+  let projectName = "Project Ivy: Online Ranking";
 
   if (fs.existsSync(CONFIG_PATH)) {
     try {
       const config = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
       projectUrl = config.projectTasksUrl || fallbackUrl;
+      projectName = config.projectName || projectName;
     } catch {
       projectUrl = fallbackUrl;
     }
@@ -221,7 +223,7 @@ function getHelixProject() {
 
   return {
     id: handshakeApi.normalizeProjectInput(projectUrl).projectId,
-    name: "Project Helix",
+    name: projectName,
     projectUrl,
   };
 }
@@ -255,7 +257,7 @@ function createLoginManager(options = {}) {
     const loginSession = await launchLoginSession(chromium);
     const { context, browser } = loginSession;
     const page = context.pages()[0] || (await context.newPage());
-    const targetUrl = startUrl || getHelixProject().projectUrl;
+    const targetUrl = startUrl || getConfiguredProject().projectUrl;
     const targetOrigin = new URL(targetUrl).origin;
 
     const flow = {
@@ -436,7 +438,7 @@ function createAppServer(options = {}) {
         const body = await readRequestBody(req);
         const result = await loginManager.start(
           sessionId,
-          body.startUrl || getHelixProject().projectUrl,
+          body.startUrl || getConfiguredProject().projectUrl,
           (authState) => {
             sessions.setAuth(sessionId, authState);
             saveAuthToDisk(authState);
@@ -483,13 +485,13 @@ function createAppServer(options = {}) {
         }
 
         const body = await readRequestBody(req);
-        const helixProject = getHelixProject();
+        const project = getConfiguredProject();
 
         try {
           const dashboard = await api.fetchDashboardForProject(
-            body.projectInput || helixProject.projectUrl,
+            body.projectInput || project.projectUrl,
             session.authState,
-            { project: { id: helixProject.id, name: helixProject.name } }
+            { project: { id: project.id, name: project.name } }
           );
           sendJson(res, 200, dashboard);
         } catch (err) {
@@ -533,7 +535,7 @@ module.exports = {
   createAppServer,
   createSessionId,
   createSessionStore,
-  getHelixProject,
+  getConfiguredProject,
   closeLoginSession,
   launchLoginSession,
   parseCookies,

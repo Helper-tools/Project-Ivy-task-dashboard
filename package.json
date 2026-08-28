@@ -1,4 +1,7 @@
 {
+  "name": "project-ivy-task-dashboard",
+  "version": "1.0.0",
+  "description": "Local Handshake task-stage dashboard for Project Ivy: Online Ranking",
   "scripts": {
     "start": "node server.js",
     "test": "node --test"

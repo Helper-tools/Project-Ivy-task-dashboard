@@ -5,7 +5,7 @@ const {
   createAppServer,
   createSessionId,
   createSessionStore,
-  getHelixProject,
+  getConfiguredProject,
   launchLoginSession,
   parseCookies,
 } = require("./server");
@@ -67,11 +67,11 @@ test("createAppServer returns an HTTP server instance", () => {
   server.close();
 });
 
-test("getHelixProject reads the configured Project Helix URL", () => {
-  assert.deepEqual(getHelixProject(), {
-    id: "26a53071-8843-4138-97df-430bd3e4cd45",
-    name: "Project Helix",
+test("getConfiguredProject returns the default Project Ivy task URL", () => {
+  assert.deepEqual(getConfiguredProject(), {
+    id: "aebaf7d0-8cc1-4b11-82bc-3a57a2f4ff4f",
+    name: "Project Ivy: Online Ranking",
     projectUrl:
-      "https://ai.joinhandshake.com/fellow/projects/past/26a53071-8843-4138-97df-430bd3e4cd45",
+      "https://ai.joinhandshake.com/fellow/aebaf7d0-8cc1-4b11-82bc-3a57a2f4ff4f/tasks",
   });
 });

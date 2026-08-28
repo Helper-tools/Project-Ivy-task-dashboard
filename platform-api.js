@@ -334,15 +334,19 @@ function pickFirstIsoLike(values) {
 function normalizeTask(task, project = {}) {
   const data = task.data || {};
   const stage = task.$related?.pipelineStage || task.pipelineStage || {};
+  const stageName = [
+    task.$related?.pipelineStage?.name,
+    task.pipelineStage?.name,
+    task.pipelineStageName,
+    task.stageName,
+    typeof task.stage === "string" ? task.stage : task.stage?.name,
+  ].find((value) => typeof value === "string" && value.trim());
 
   return {
     id: task.id,
     projectId: project.id || task.annotationProjectId || "",
     projectName: project.name || "",
-    stage:
-      task.$related?.pipelineStage?.name ||
-      task.pipelineStage?.name ||
-      "No stage found",
+    stage: stageName?.trim() || "No stage found",
     buildStatus: task.buildStatus ?? null,
     title: data.task_title || data.pr_title || task.title || "",
     updatedAt: pickFirstIsoLike([

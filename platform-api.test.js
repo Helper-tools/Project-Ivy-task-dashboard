@@ -411,3 +411,12 @@ test("normalizeTask uses pr_title when task_title is missing", () => {
 
   assert.equal(task.title, "Fix login bug");
 });
+
+test("normalizeTask reads a top-level pipeline stage name", () => {
+  const task = normalizeTask({
+    id: "t-3",
+    pipelineStageName: "Review Stage 2",
+  });
+
+  assert.equal(task.stage, "Review Stage 2");
+});

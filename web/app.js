@@ -23,20 +23,18 @@ function stageName(stage) {
 /** Pattern-based buckets so new platform stage names still classify correctly. */
 function isAcceptedStage(stage) {
   const lc = stageName(stage).toLowerCase();
-  return lc === "delivered" || lc === "ready to deliver";
+  return ["approved", "completed", "delivered", "ready to deliver"].includes(lc);
 }
 
-function isEvaluationStage(stage) {
-  const s = stageName(stage);
-  const lc = s.toLowerCase();
-  return /pass@/i.test(s) || lc.includes("submitted for pass@");
+function isReviewStage(stage) {
+  return stageName(stage).toLowerCase().includes("review");
 }
 
-function isAuditStage(stage) {
-  const s = stageName(stage);
-  const lc = s.toLowerCase();
-  if (/clayden/i.test(s)) return false;
-  return lc.includes("internal audit") || /\breview\b/i.test(lc) || lc.includes("likely rejected");
+function isActionNeededStage(stage) {
+  const lc = stageName(stage).toLowerCase();
+  return ["fix in progress", "in progress", "needs fixing", "rejected", "unclaimed"].some(
+    (value) => lc.includes(value)
+  );
 }
 
 const QUICK_FILTERS = {
@@ -46,29 +44,29 @@ const QUICK_FILTERS = {
     accent: "green",
     test: (task) => isAcceptedStage(task.stage),
   },
-  internal_audit: {
-    label: "Internal Audit",
-    sub: "Review + Internal Audit",
+  review: {
+    label: "In review",
+    sub: "Awaiting + review stages",
     accent: "blue",
-    test: (task) => isAuditStage(task.stage),
+    test: (task) => isReviewStage(task.stage),
   },
-  pass_at: {
-    label: "In evaluation",
-    sub: "All Pass@ Stages",
-    accent: "violet",
-    test: (task) => isEvaluationStage(task.stage),
+  action_needed: {
+    label: "Action needed",
+    sub: "In progress + fixes",
+    accent: "coral",
+    test: (task) => isActionNeededStage(task.stage),
   },
   other: {
     label: "Misc",
-    sub: "Failed + Invalid + Misc",
+    sub: "Other pipeline stages",
     accent: "amber",
     test: (task) =>
       !isAcceptedStage(task.stage) &&
-      !isAuditStage(task.stage) &&
-      !isEvaluationStage(task.stage),
+      !isReviewStage(task.stage) &&
+      !isActionNeededStage(task.stage),
   },
 };
-const FILTER_ORDER = ["delivered_ready", "pass_at", "internal_audit", "other"];
+const FILTER_ORDER = ["delivered_ready", "review", "action_needed", "other"];
 
 const BRANDING_PUBLIC = {
   documentTitle: "Tasks Dashboard",
@@ -80,11 +78,11 @@ const BRANDING_PUBLIC = {
 };
 
 const BRANDING_PRIVATE = {
-  documentTitle: "Project Helix",
-  mastheadTitle: "Project Helix",
-  subtitle: "Every Project Helix task, stage, and build in one place.",
+  documentTitle: "Project Ivy Task Dashboard",
+  mastheadTitle: "Project Ivy: Online Ranking",
+  subtitle: "Every Ivy task, exact pipeline stage, and build status in one place.",
   connectButton: "Login",
-  footnote: "Project Helix · Handshake dashboard",
+  footnote: "Project Ivy · Handshake dashboard",
 };
 
 const elements = {
@@ -300,8 +298,8 @@ function pillClass(value) {
   const lc = v.toLowerCase();
   if (lc === "failing" || lc.includes("failed")) return "coral";
   if (lc === "passing" || isAcceptedStage(v)) return "green";
-  if (isEvaluationStage(v)) return "violet";
-  if (isAuditStage(v)) return "blue";
+  if (isReviewStage(v)) return "blue";
+  if (isActionNeededStage(v)) return "coral";
   if (lc.includes("invalid")) return "ochre";
   if (lc.includes("holding")) return "amber";
   return "amber";
