@@ -132,6 +132,20 @@
                 <summary>My pay looks wrong</summary>
                 <p>Start with Handshake's guide to how AI payments are processed:</p>
                 <p class="faq-links"><a href="https://support.joinhandshake.com/hc/en-us/articles/32263614087575-Handshake-AI-payments-processing" target="_blank" rel="noreferrer">Handshake AI payments processing</a></p>
+                <p>For Ivy and Roadhouse tasking, people are usually told the same thing in Slack: a task counts once it reaches Ready to Deliver or Delivered. Review stages, Awaiting Review, Needs Fixing, and staging are still in the review loop.</p>
+                <p>Payments can take about a week to show up, so the dashboard estimate is just a quick check. The Handshake Payments page is still the final source of truth.</p>
+              </details>
+              <details>
+                <summary>How do I know if a task is RTD or Delivered?</summary>
+                <p>Use this dashboard first. It pulls the exact stage from your Handshake task list and shows it next to each task.</p>
+                <p>On the HAI task page, you can also hover over the task ID in the top-left of a task. Alex told people that <strong>Unknown</strong> can still mean RTD or Delivered after you hover, so check the hover text before assuming it is stuck.</p>
+                <p>If it says Awaiting Review, Review 1, Review 2, staging, or Needs Fixing, it has not fully cleared the review path yet.</p>
+              </details>
+              <details>
+                <summary>When are new tasks coming?</summary>
+                <p>Tasks come in batches. They are not assigned to you one-by-one, and there is not a fixed daily schedule.</p>
+                <p>When a batch drops, claim tasks yourself from the HAI task list. They can go fast, so quiet days usually just mean the last batch is done and the team is waiting on the next one.</p>
+                <p>For updates, check <a href="https://handshakeai.enterprise.slack.com/archives/C0ALVNL71H8" target="_blank" rel="noreferrer">ivy-online-ranking-announcements</a>, <a href="https://handshakeai.enterprise.slack.com/archives/C0BMMGZL3T2" target="_blank" rel="noreferrer">roadhouse-announcements</a>, the project notes, and office hours.</p>
               </details>
               <details>
                 <summary>I don't have access to the GitHub repo</summary>
@@ -143,13 +157,18 @@
                 </ul>
               </details>
               <details>
-                <summary>I can't find the offline tasks</summary>
+                <summary>I can't find the task files</summary>
                 <ul>
                   <li>They are in the <a href="https://github.com/handshake-coding/ivy-online-task-files/tree/main/ivy-offline" target="_blank" rel="noreferrer"><code>ivy-offline</code> folder</a> inside the online repo.</li>
                   <li>Offline tasks use IDs for filenames. Match the task ID to the file in the repo.</li>
                   <li>The <a href="https://project-ivy-online-hub.learn.joinhandshake.com/offline" target="_blank" rel="noreferrer">offline task hub</a> has more details.</li>
-                  <li>Large files must be downloaded from the <a href="https://github.com/handshake-coding/ivy-online-task-files/releases/tag/unblock-2026-06-12" target="_blank" rel="noreferrer">GitHub release</a>: <code>cosco-data-corruption.zip</code>, <code>ninja-cicd-target-determinator.zip</code>, and <code>unintended-adds-reconciliation-v2.zip</code>.</li>
+                  <li>If a Roadhouse or Ivy task is too large for the repo, use the <a href="https://github.com/handshake-coding/ivy-online-task-files/releases/tag/unblock-2026-06-12" target="_blank" rel="noreferrer">GitHub release</a>. The large files people keep looking for are <code>cosco-data-corruption.zip</code>, <code>ninja-cicd-target-determinator.zip</code>, and <code>unintended-adds-reconciliation-v2.zip</code>.</li>
                 </ul>
+              </details>
+              <details>
+                <summary>My task says Needs Fixing but I don't see feedback</summary>
+                <p>Check the task page first, then check the latest feedback sheet posted by the team. Alex posted an Ivy rejected-task feedback sheet in Slack for this exact issue.</p>
+                <p>If the task still has no feedback, the feedback looks stale, or the task ID is missing from the sheet, ask in the tasking thread with the task ID and what you checked.</p>
               </details>
               <details>
                 <summary>I want to refer a friend</summary>
