@@ -24,7 +24,10 @@ Open [http://localhost:4173](http://localhost:4173), select **Login**, and sign 
 - Last update time
 - Search, stage, build, and date filters
 - Quick groups for accepted tasks, tasks in review, and tasks needing action
+- Estimated pay for tasks that reached Ready to Deliver or Delivered after July 29, 2026
 - Copyable filtered task lists
+
+The pay card counts each qualifying task once at `$225`. It is an estimate based on the current Handshake stage and task update date; Handshake's Payments page remains the source of truth for posted earnings.
 
 ## Project configuration
 

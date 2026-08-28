@@ -38,6 +38,12 @@ function isActionNeededStage(stage) {
 }
 
 const QUICK_FILTERS = {
+  paid: {
+    label: "Estimated pay",
+    sub: "$225 each after Jul 29",
+    accent: "green",
+    test: (task) => task.paymentEligible === true,
+  },
   delivered_ready: {
     label: "Accepted",
     sub: "Delivered + RTD",
@@ -66,7 +72,7 @@ const QUICK_FILTERS = {
       !isActionNeededStage(task.stage),
   },
 };
-const FILTER_ORDER = ["delivered_ready", "review", "action_needed", "other"];
+const FILTER_ORDER = ["paid", "delivered_ready", "review", "action_needed", "other"];
 
 const BRANDING_PUBLIC = {
   documentTitle: "Tasks Dashboard",
@@ -317,7 +323,8 @@ function countByPredicate(predicate) {
 }
 
 function renderSummary() {
-  const total = state.dashboard?.summary?.total || 0;
+  const summary = state.dashboard?.summary || {};
+  const total = summary.total || 0;
   const cards = [
     {
       key: "all",
@@ -326,13 +333,19 @@ function renderSummary() {
       value: total,
       accent: "violet",
     },
-    ...FILTER_ORDER.map((key) => ({
-      key,
-      label: QUICK_FILTERS[key].label,
-      sub: QUICK_FILTERS[key].sub,
-      value: countByPredicate(QUICK_FILTERS[key].test),
-      accent: QUICK_FILTERS[key].accent,
-    })),
+    ...FILTER_ORDER.map((key) => {
+      const count = countByPredicate(QUICK_FILTERS[key].test);
+      return {
+        key,
+        label: QUICK_FILTERS[key].label,
+        sub:
+          key === "paid"
+            ? `${count} task${count === 1 ? "" : "s"} × $${summary.paymentPerTask || 225}`
+            : QUICK_FILTERS[key].sub,
+        value: key === "paid" ? formatCurrency(summary.estimatedPay || 0) : count,
+        accent: QUICK_FILTERS[key].accent,
+      };
+    }),
   ];
 
   elements.summaryGrid.innerHTML = cards
@@ -533,6 +546,14 @@ function formatDate(value) {
   });
 }
 
+function formatCurrency(value) {
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(Number(value) || 0);
+}
+
 function formatRelativeUpdated(isoValue) {
   if (!isoValue) return "Updated —";
   const date = new Date(isoValue);
@@ -602,7 +623,7 @@ function renderTable() {
 
   if (tasks.length === 0) {
     elements.taskTable.innerHTML = `
-      <tr><td colspan="5" style="padding: 32px; text-align: center; color: var(--muted);">
+      <tr><td colspan="6" style="padding: 32px; text-align: center; color: var(--muted);">
         No tasks match the current filters.
       </td></tr>
     `;
@@ -626,6 +647,15 @@ function renderTable() {
             </span>
           </td>
           <td><span class="pill ${pillClass(task.stage)}">${escapeHtml(task.stage)}</span></td>
+          <td>
+            ${
+              task.paymentEligible
+                ? `<span class="pill green" title="Estimated payment: current stage is RTD or Delivered after July 29, 2026">${escapeHtml(
+                    formatCurrency(task.paymentAmount)
+                  )}</span>`
+                : '<span class="muted-cell">—</span>'
+            }
+          </td>
           <td><span class="pill ${pillClass(task.buildStatus || "None")}">${escapeHtml(
             task.buildStatus || "None"
           )}</span></td>

@@ -3,9 +3,12 @@ const test = require("node:test");
 
 const {
   PAGE_SIZE,
+  PAYMENT_CUTOFF_ISO,
+  PAYMENT_PER_TASK,
   buildTrpcUrl,
   fetchAllTasks,
   fetchDashboardForProject,
+  isPaymentEligible,
   mergeClaimedTasksWithPastHistory,
   normalizeProjectInput,
   normalizeTask,
@@ -396,6 +399,8 @@ test("normalizeTask extracts stage, title, and updatedAt", () => {
     buildStatus: "passing",
     title: "Finish thing",
     updatedAt: "2026-05-22T10:00:00Z",
+    paymentEligible: false,
+    paymentAmount: 0,
   });
 });
 
@@ -419,4 +424,24 @@ test("normalizeTask reads a top-level pipeline stage name", () => {
   });
 
   assert.equal(task.stage, "Review Stage 2");
+});
+
+test("payment eligibility counts RTD or Delivered once after July 29", () => {
+  assert.equal(PAYMENT_PER_TASK, 225);
+  assert.equal(PAYMENT_CUTOFF_ISO, "2026-07-30T00:00:00.000Z");
+  assert.equal(isPaymentEligible("Ready to Deliver", "2026-07-30T00:00:00Z"), true);
+  assert.equal(isPaymentEligible("Delivered", "2026-08-13T18:44:54Z"), true);
+  assert.equal(isPaymentEligible("Delivered", "2026-07-29T23:59:59Z"), false);
+  assert.equal(isPaymentEligible("Review Stage 2", "2026-08-13T18:44:54Z"), false);
+});
+
+test("normalizeTask adds a $225 payment estimate to an eligible task", () => {
+  const task = normalizeTask({
+    id: "paid-1",
+    pipelineStage: { name: "Delivered" },
+    updatedAt: "2026-08-13T18:44:54Z",
+  });
+
+  assert.equal(task.paymentEligible, true);
+  assert.equal(task.paymentAmount, 225);
 });

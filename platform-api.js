@@ -1,6 +1,8 @@
 const HANDSHAKE_ORIGIN = "https://ai.joinhandshake.com";
 const DEFAULT_REFERER = `${HANDSHAKE_ORIGIN}/fellow/projects`;
 const PAGE_SIZE = 10;
+const PAYMENT_PER_TASK = 225;
+const PAYMENT_CUTOFF_ISO = "2026-07-30T00:00:00.000Z";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -331,6 +333,16 @@ function pickFirstIsoLike(values) {
   return null;
 }
 
+function isPaymentEligible(stageName, stageUpdatedAt) {
+  const stage = String(stageName || "").trim().toLowerCase();
+  const timestamp = new Date(stageUpdatedAt || "").getTime();
+  return (
+    ["ready to deliver", "delivered"].includes(stage) &&
+    Number.isFinite(timestamp) &&
+    timestamp >= Date.parse(PAYMENT_CUTOFF_ISO)
+  );
+}
+
 function normalizeTask(task, project = {}) {
   const data = task.data || {};
   const stage = task.$related?.pipelineStage || task.pipelineStage || {};
@@ -341,31 +353,36 @@ function normalizeTask(task, project = {}) {
     task.stageName,
     typeof task.stage === "string" ? task.stage : task.stage?.name,
   ].find((value) => typeof value === "string" && value.trim());
+  const normalizedStage = stageName?.trim() || "No stage found";
+  const updatedAt = pickFirstIsoLike([
+    task.statusUpdatedAt,
+    task.status_updated_at,
+    task.lastStatusChangeAt,
+    task.lastActionAt,
+    task.last_action_at,
+    task.lastWorkedAt,
+    task.last_worked_at,
+    task.updatedAt,
+    task.updated_at,
+    task.modifiedAt,
+    task.lastModifiedAt,
+    stage.enteredAt,
+    stage.updated_at,
+    data.status_updated_at,
+    data.updated_at,
+  ]);
+  const paymentEligible = isPaymentEligible(normalizedStage, updatedAt);
 
   return {
     id: task.id,
     projectId: project.id || task.annotationProjectId || "",
     projectName: project.name || "",
-    stage: stageName?.trim() || "No stage found",
+    stage: normalizedStage,
     buildStatus: task.buildStatus ?? null,
     title: data.task_title || data.pr_title || task.title || "",
-    updatedAt: pickFirstIsoLike([
-      task.statusUpdatedAt,
-      task.status_updated_at,
-      task.lastStatusChangeAt,
-      task.lastActionAt,
-      task.last_action_at,
-      task.lastWorkedAt,
-      task.last_worked_at,
-      task.updatedAt,
-      task.updated_at,
-      task.modifiedAt,
-      task.lastModifiedAt,
-      stage.enteredAt,
-      stage.updated_at,
-      data.status_updated_at,
-      data.updated_at,
-    ]),
+    updatedAt,
+    paymentEligible,
+    paymentAmount: paymentEligible ? PAYMENT_PER_TASK : 0,
   };
 }
 
@@ -537,18 +554,29 @@ async function fetchDashboardForProject(projectInput, storageState, options = {}
   }
 
   const normalizedTasks = tasks.map((task) => normalizeTask(task, project));
+  const paidTaskCount = normalizedTasks.filter(
+    (task) => task.paymentEligible
+  ).length;
 
   return {
     generatedAt: new Date().toISOString(),
     project,
     tasks: normalizedTasks,
-    summary: { total: normalizedTasks.length },
+    summary: {
+      total: normalizedTasks.length,
+      paidTaskCount,
+      paymentPerTask: PAYMENT_PER_TASK,
+      paymentCutoff: PAYMENT_CUTOFF_ISO,
+      estimatedPay: paidTaskCount * PAYMENT_PER_TASK,
+    },
     ...(historyWarning ? { historyWarning } : {}),
   };
 }
 
 module.exports = {
   PAGE_SIZE,
+  PAYMENT_CUTOFF_ISO,
+  PAYMENT_PER_TASK,
   buildTrpcUrl,
   extractPastHistoryTasks,
   extractPastHistoryTasksFromJson,
@@ -558,6 +586,7 @@ module.exports = {
   fetchPastProjectTaskHistory,
   fetchProfile,
   isPastProjectUrl,
+  isPaymentEligible,
   mergeClaimedTasksWithPastHistory,
   normalizeProjectInput,
   normalizeTask,

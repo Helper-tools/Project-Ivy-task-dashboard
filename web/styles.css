@@ -522,7 +522,7 @@ select:focus {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -715,6 +715,7 @@ select:focus {
 
 .metric.accent-green strong { color: var(--brand-strong); }
 .metric.accent-blue strong { color: var(--blue); }
+.metric.accent-coral strong { color: var(--coral); }
 .metric.accent-amber strong { color: var(--amber); }
 .metric.accent-violet strong { color: var(--violet); }
 
@@ -726,6 +727,7 @@ select:focus {
 
 .metric.accent-green.active { border-color: var(--brand); box-shadow: 0 0 0 4px var(--brand-soft); }
 .metric.accent-blue.active { border-color: var(--blue); box-shadow: 0 0 0 4px var(--blue-soft); }
+.metric.accent-coral.active { border-color: var(--coral); box-shadow: 0 0 0 4px var(--coral-soft); }
 .metric.accent-amber.active { border-color: var(--amber); box-shadow: 0 0 0 4px var(--amber-soft); }
 .metric.accent-violet.active { border-color: var(--violet); box-shadow: 0 0 0 4px var(--violet-soft); }
 
