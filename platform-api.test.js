@@ -435,12 +435,31 @@ test("payment eligibility counts RTD or Delivered once after July 29", () => {
   assert.equal(isPaymentEligible("Review Stage 2", "2026-08-13T18:44:54Z"), false);
 });
 
+test("payment eligibility can count RTD or Delivered without a date cutoff", () => {
+  assert.equal(isPaymentEligible("Ready to Deliver", null, null), true);
+  assert.equal(isPaymentEligible("Delivered", "2026-05-01T00:00:00Z", null), true);
+  assert.equal(isPaymentEligible("Review 2", "2026-08-13T18:44:54Z", null), false);
+});
+
 test("normalizeTask adds a $225 payment estimate to an eligible task", () => {
   const task = normalizeTask({
     id: "paid-1",
     pipelineStage: { name: "Delivered" },
     updatedAt: "2026-08-13T18:44:54Z",
   });
+
+  assert.equal(task.paymentEligible, true);
+  assert.equal(task.paymentAmount, 225);
+});
+
+test("normalizeTask applies the Roadhouse no-cutoff payment rule", () => {
+  const task = normalizeTask(
+    {
+      id: "roadhouse-paid-1",
+      pipelineStage: { name: "Ready to Deliver" },
+    },
+    { paymentPerTask: 225, paymentCutoff: null }
+  );
 
   assert.equal(task.paymentEligible, true);
   assert.equal(task.paymentAmount, 225);

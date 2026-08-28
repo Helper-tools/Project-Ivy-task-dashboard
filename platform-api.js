@@ -333,14 +333,17 @@ function pickFirstIsoLike(values) {
   return null;
 }
 
-function isPaymentEligible(stageName, stageUpdatedAt) {
+function isPaymentEligible(
+  stageName,
+  stageUpdatedAt,
+  paymentCutoff = PAYMENT_CUTOFF_ISO
+) {
   const stage = String(stageName || "").trim().toLowerCase();
+  if (!["ready to deliver", "delivered"].includes(stage)) return false;
+  if (!paymentCutoff) return true;
+
   const timestamp = new Date(stageUpdatedAt || "").getTime();
-  return (
-    ["ready to deliver", "delivered"].includes(stage) &&
-    Number.isFinite(timestamp) &&
-    timestamp >= Date.parse(PAYMENT_CUTOFF_ISO)
-  );
+  return Number.isFinite(timestamp) && timestamp >= Date.parse(paymentCutoff);
 }
 
 function normalizeTask(task, project = {}) {
@@ -371,7 +374,16 @@ function normalizeTask(task, project = {}) {
     data.status_updated_at,
     data.updated_at,
   ]);
-  const paymentEligible = isPaymentEligible(normalizedStage, updatedAt);
+  const paymentPerTask = Number(project.paymentPerTask) || PAYMENT_PER_TASK;
+  const paymentCutoff =
+    project.paymentCutoff === null
+      ? null
+      : project.paymentCutoff || PAYMENT_CUTOFF_ISO;
+  const paymentEligible = isPaymentEligible(
+    normalizedStage,
+    updatedAt,
+    paymentCutoff
+  );
 
   return {
     id: task.id,
@@ -382,7 +394,7 @@ function normalizeTask(task, project = {}) {
     title: data.task_title || data.pr_title || task.title || "",
     updatedAt,
     paymentEligible,
-    paymentAmount: paymentEligible ? PAYMENT_PER_TASK : 0,
+    paymentAmount: paymentEligible ? paymentPerTask : 0,
   };
 }
 
@@ -557,6 +569,11 @@ async function fetchDashboardForProject(projectInput, storageState, options = {}
   const paidTaskCount = normalizedTasks.filter(
     (task) => task.paymentEligible
   ).length;
+  const paymentPerTask = Number(project.paymentPerTask) || PAYMENT_PER_TASK;
+  const paymentCutoff =
+    project.paymentCutoff === null
+      ? null
+      : project.paymentCutoff || PAYMENT_CUTOFF_ISO;
 
   return {
     generatedAt: new Date().toISOString(),
@@ -565,9 +582,9 @@ async function fetchDashboardForProject(projectInput, storageState, options = {}
     summary: {
       total: normalizedTasks.length,
       paidTaskCount,
-      paymentPerTask: PAYMENT_PER_TASK,
-      paymentCutoff: PAYMENT_CUTOFF_ISO,
-      estimatedPay: paidTaskCount * PAYMENT_PER_TASK,
+      paymentPerTask,
+      paymentCutoff,
+      estimatedPay: paidTaskCount * paymentPerTask,
     },
     ...(historyWarning ? { historyWarning } : {}),
   };

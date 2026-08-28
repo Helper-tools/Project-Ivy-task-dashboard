@@ -6,6 +6,7 @@ const {
   createSessionId,
   createSessionStore,
   getConfiguredProject,
+  getConfiguredProjects,
   launchLoginSession,
   parseCookies,
 } = require("./server");
@@ -69,9 +70,30 @@ test("createAppServer returns an HTTP server instance", () => {
 
 test("getConfiguredProject returns the default Project Ivy task URL", () => {
   assert.deepEqual(getConfiguredProject(), {
+    key: "ivy",
+    shortName: "Ivy",
     id: "aebaf7d0-8cc1-4b11-82bc-3a57a2f4ff4f",
     name: "Project Ivy: Online Ranking",
     projectUrl:
       "https://ai.joinhandshake.com/fellow/aebaf7d0-8cc1-4b11-82bc-3a57a2f4ff4f/tasks",
+    paymentPerTask: 225,
+    paymentCutoff: "2026-07-30T00:00:00.000Z",
+  });
+});
+
+test("getConfiguredProjects includes Roadhouse without a date cutoff", () => {
+  const roadhouse = getConfiguredProjects().find(
+    (project) => project.key === "roadhouse"
+  );
+
+  assert.deepEqual(roadhouse, {
+    key: "roadhouse",
+    shortName: "Roadhouse",
+    id: "5df1908e-d347-46ae-b522-2bd363b7477a",
+    name: "Project Roadhouse",
+    projectUrl:
+      "https://ai.joinhandshake.com/fellow/5df1908e-d347-46ae-b522-2bd363b7477a/tasks",
+    paymentPerTask: 225,
+    paymentCutoff: null,
   });
 });

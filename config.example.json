@@ -1,4 +1,20 @@
 {
-  "projectName": "Project Ivy: Online Ranking",
-  "projectTasksUrl": "https://ai.joinhandshake.com/fellow/aebaf7d0-8cc1-4b11-82bc-3a57a2f4ff4f/tasks"
+  "projects": [
+    {
+      "key": "ivy",
+      "shortName": "Ivy",
+      "name": "Project Ivy: Online Ranking",
+      "projectTasksUrl": "https://ai.joinhandshake.com/fellow/aebaf7d0-8cc1-4b11-82bc-3a57a2f4ff4f/tasks",
+      "paymentPerTask": 225,
+      "paymentCutoff": "2026-07-30T00:00:00.000Z"
+    },
+    {
+      "key": "roadhouse",
+      "shortName": "Roadhouse",
+      "name": "Project Roadhouse",
+      "projectTasksUrl": "https://ai.joinhandshake.com/fellow/5df1908e-d347-46ae-b522-2bd363b7477a/tasks",
+      "paymentPerTask": 225,
+      "paymentCutoff": null
+    }
+  ]
 }

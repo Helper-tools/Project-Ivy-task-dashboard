@@ -205,27 +205,55 @@ function ensureSession(req, res, sessions) {
   return sessionId;
 }
 
-function getConfiguredProject() {
-  const fallbackUrl =
-    "https://ai.joinhandshake.com/fellow/aebaf7d0-8cc1-4b11-82bc-3a57a2f4ff4f/tasks";
-  let projectUrl = fallbackUrl;
-  let projectName = "Project Ivy: Online Ranking";
+const DEFAULT_PROJECTS = [
+  {
+    key: "ivy",
+    shortName: "Ivy",
+    name: "Project Ivy: Online Ranking",
+    projectUrl:
+      "https://ai.joinhandshake.com/fellow/aebaf7d0-8cc1-4b11-82bc-3a57a2f4ff4f/tasks",
+    paymentPerTask: 225,
+    paymentCutoff: "2026-07-30T00:00:00.000Z",
+  },
+  {
+    key: "roadhouse",
+    shortName: "Roadhouse",
+    name: "Project Roadhouse",
+    projectUrl:
+      "https://ai.joinhandshake.com/fellow/5df1908e-d347-46ae-b522-2bd363b7477a/tasks",
+    paymentPerTask: 225,
+    paymentCutoff: null,
+  },
+];
+
+function getConfiguredProjects() {
+  let projects = DEFAULT_PROJECTS.map((project) => ({ ...project }));
 
   if (fs.existsSync(CONFIG_PATH)) {
     try {
       const config = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
-      projectUrl = config.projectTasksUrl || fallbackUrl;
-      projectName = config.projectName || projectName;
+      if (Array.isArray(config.projects) && config.projects.length > 0) {
+        projects = config.projects;
+      } else if (config.projectTasksUrl || config.projectName) {
+        projects[0] = {
+          ...projects[0],
+          projectUrl: config.projectTasksUrl || projects[0].projectUrl,
+          name: config.projectName || projects[0].name,
+        };
+      }
     } catch {
-      projectUrl = fallbackUrl;
+      projects = DEFAULT_PROJECTS.map((project) => ({ ...project }));
     }
   }
 
-  return {
-    id: handshakeApi.normalizeProjectInput(projectUrl).projectId,
-    name: projectName,
-    projectUrl,
-  };
+  return projects.map((project) => ({
+    ...project,
+    id: handshakeApi.normalizeProjectInput(project.projectUrl).projectId,
+  }));
+}
+
+function getConfiguredProject(key = "ivy") {
+  return getConfiguredProjects().find((project) => project.key === key) || null;
 }
 
 async function launchLoginSession(chromium, log = console.log) {
@@ -257,7 +285,7 @@ function createLoginManager(options = {}) {
     const loginSession = await launchLoginSession(chromium);
     const { context, browser } = loginSession;
     const page = context.pages()[0] || (await context.newPage());
-    const targetUrl = startUrl || getConfiguredProject().projectUrl;
+    const targetUrl = startUrl || getConfiguredProjects()[0].projectUrl;
     const targetOrigin = new URL(targetUrl).origin;
 
     const flow = {
@@ -414,6 +442,20 @@ function createAppServer(options = {}) {
     const sessionId = ensureSession(req, res, sessions);
 
     try {
+      if (req.method === "GET" && url.pathname === "/api/projects") {
+        const projects = getConfiguredProjects().map(
+          ({ key, shortName, name, paymentPerTask, paymentCutoff }) => ({
+            key,
+            shortName,
+            name,
+            paymentPerTask,
+            paymentCutoff,
+          })
+        );
+        sendJson(res, 200, { projects });
+        return;
+      }
+
       if (req.method === "GET" && url.pathname === "/api/status") {
         const session = loadSession(sessions, sessionId);
         if (!session?.authState) {
@@ -438,7 +480,7 @@ function createAppServer(options = {}) {
         const body = await readRequestBody(req);
         const result = await loginManager.start(
           sessionId,
-          body.startUrl || getConfiguredProject().projectUrl,
+          body.startUrl || getConfiguredProjects()[0].projectUrl,
           (authState) => {
             sessions.setAuth(sessionId, authState);
             saveAuthToDisk(authState);
@@ -485,13 +527,17 @@ function createAppServer(options = {}) {
         }
 
         const body = await readRequestBody(req);
-        const project = getConfiguredProject();
+        const project = getConfiguredProject(body.projectKey || "ivy");
+        if (!project) {
+          sendJson(res, 400, { error: "Unknown project." });
+          return;
+        }
 
         try {
           const dashboard = await api.fetchDashboardForProject(
-            body.projectInput || project.projectUrl,
+            project.projectUrl,
             session.authState,
-            { project: { id: project.id, name: project.name } }
+            { project }
           );
           sendJson(res, 200, dashboard);
         } catch (err) {
@@ -536,6 +582,7 @@ module.exports = {
   createSessionId,
   createSessionStore,
   getConfiguredProject,
+  getConfiguredProjects,
   closeLoginSession,
   launchLoginSession,
   parseCookies,

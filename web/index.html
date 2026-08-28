@@ -58,17 +58,20 @@
       </section>
 
       <section class="dashboard" id="dashboard" hidden>
-        <div class="summary-grid" id="summary-grid"></div>
+        <nav class="project-tabs" id="project-tabs" aria-label="Projects"></nav>
 
-        <article class="panel activity-panel" id="activity-panel">
-          <div class="activity-heading">
-            <h2>Latest activity</h2>
-            <span id="activity-meta" class="activity-meta"></span>
-          </div>
-          <ul id="activity-list" class="activity-list"></ul>
-        </article>
+        <div id="project-content">
+          <div class="summary-grid" id="summary-grid"></div>
 
-        <article class="panel">
+          <article class="panel activity-panel" id="activity-panel">
+            <div class="activity-heading">
+              <h2>Latest activity</h2>
+              <span id="activity-meta" class="activity-meta"></span>
+            </div>
+            <ul id="activity-list" class="activity-list"></ul>
+          </article>
+
+          <article class="panel">
             <div class="filter-bar">
               <span id="result-count" class="result-count">0 tasks</span>
               <input
@@ -118,33 +121,34 @@
                 <tbody id="task-table"></tbody>
               </table>
             </div>
-        </article>
+          </article>
 
-        <section class="faq-section" aria-labelledby="faq-heading">
-          <h2 id="faq-heading">FAQ</h2>
-          <div class="faq-list">
-            <details>
-              <summary>What is this pay number?</summary>
-              <p>It adds $225 for every task that meets the payment rule. Check your Payments page for the final amount in your account.</p>
-            </details>
-            <details>
-              <summary>Which tasks are included?</summary>
-              <p>A task counts once if it is currently Ready to Deliver or Delivered and was updated after July 29, 2026.</p>
-            </details>
-            <details>
-              <summary>Why might Payments show a different amount?</summary>
-              <p>This page only has your task stage and update date. Payment processing or account adjustments may not show up here.</p>
-            </details>
-            <details>
-              <summary>How do I get the latest numbers?</summary>
-              <p>Click Refresh. The dashboard will pull your latest tasks from Handshake and recalculate the total.</p>
-            </details>
-            <details>
-              <summary>Does this upload my Handshake login?</summary>
-              <p>No. Your login stays in the local auth.json file on this computer. GitHub never receives it.</p>
-            </details>
-          </div>
-        </section>
+          <section class="faq-section" aria-labelledby="faq-heading">
+            <h2 id="faq-heading">FAQ</h2>
+            <div class="faq-list">
+              <details>
+                <summary>What is this pay number?</summary>
+                <p id="faq-pay-number">It adds $225 for every task that meets the payment rule. Check your Payments page for the final amount in your account.</p>
+              </details>
+              <details>
+                <summary>Which tasks are included?</summary>
+                <p id="faq-qualifying-tasks"></p>
+              </details>
+              <details>
+                <summary>Why might Payments show a different amount?</summary>
+                <p>This page only has your task stage and update date. Payment processing or account adjustments may not show up here.</p>
+              </details>
+              <details>
+                <summary>How do I get the latest numbers?</summary>
+                <p>Click Refresh. The dashboard will pull the latest tasks for this project and recalculate the total.</p>
+              </details>
+              <details>
+                <summary>Does this upload my Handshake login?</summary>
+                <p>No. Your login stays in the local auth.json file on this computer. GitHub never receives it.</p>
+              </details>
+            </div>
+          </section>
+        </div>
       </section>
 
       <footer class="footnote">

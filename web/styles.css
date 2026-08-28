@@ -527,6 +527,40 @@ select:focus {
   margin-bottom: 18px;
 }
 
+.project-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 16px;
+  padding: 3px;
+  background: #e9edf1;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.project-tab {
+  min-height: 32px;
+  padding: 0 16px;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.project-tab:hover:not(:disabled) {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.55);
+  border-color: transparent;
+}
+
+.project-tab.active {
+  color: var(--ink);
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
 .activity-panel {
   margin-bottom: 18px;
   padding: 16px 18px;

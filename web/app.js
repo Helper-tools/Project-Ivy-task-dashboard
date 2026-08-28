@@ -5,6 +5,8 @@ const ACTIVITY_SNAPSHOT_VERSION = 2;
 const state = {
   connected: false,
   profile: null,
+  projects: [],
+  projectKey: "ivy",
   dashboard: null,
   loginWindowOpen: false,
   quickFilter: null,
@@ -83,13 +85,26 @@ const BRANDING_PUBLIC = {
   footnote: "Tasks Dashboard",
 };
 
-const BRANDING_PRIVATE = {
-  documentTitle: "Project Ivy Task Dashboard",
-  mastheadTitle: "Project Ivy: Online Ranking",
-  subtitle: "Every Ivy task, exact pipeline stage, and build status in one place.",
-  connectButton: "Login",
-  footnote: "Project Ivy · Handshake dashboard",
-};
+function activeProject() {
+  return (
+    state.dashboard?.project ||
+    state.projects.find((project) => project.key === state.projectKey) ||
+    state.projects[0]
+  );
+}
+
+function privateBranding() {
+  const project = activeProject();
+  const shortName = project?.shortName || project?.name || "Tasks";
+  const projectName = project?.name || "Tasks Dashboard";
+  return {
+    documentTitle: `${shortName} Task Dashboard`,
+    mastheadTitle: projectName,
+    subtitle: `Every ${shortName} task, exact pipeline stage, and build status in one place.`,
+    connectButton: "Login",
+    footnote: `${shortName} · Handshake dashboard`,
+  };
+}
 
 const elements = {
   mastheadTitle: document.querySelector("#masthead-title"),
@@ -107,6 +122,8 @@ const elements = {
   loginGoogleHint: document.querySelector("#login-google-hint"),
   loadingState: document.querySelector("#loading-state"),
   dashboard: document.querySelector("#dashboard"),
+  projectTabs: document.querySelector("#project-tabs"),
+  projectContent: document.querySelector("#project-content"),
   mastheadMeta: document.querySelector("#masthead-meta"),
   generatedAt: document.querySelector("#generated-at"),
   refreshButton: document.querySelector("#refresh-button"),
@@ -124,6 +141,8 @@ const elements = {
   copyCount: document.querySelector("#copy-count"),
   clearFiltersButton: document.querySelector("#clear-filters-button"),
   taskTable: document.querySelector("#task-table"),
+  faqPayNumber: document.querySelector("#faq-pay-number"),
+  faqQualifyingTasks: document.querySelector("#faq-qualifying-tasks"),
 };
 
 function escapeHtml(value) {
@@ -260,7 +279,7 @@ function setBusy(button, busyText) {
 }
 
 function applyBranding(connected) {
-  const b = connected ? BRANDING_PRIVATE : BRANDING_PUBLIC;
+  const b = connected ? privateBranding() : BRANDING_PUBLIC;
   document.title = b.documentTitle;
   elements.mastheadTitle.textContent = b.mastheadTitle;
   elements.mastheadSubtitle.textContent = b.subtitle;
@@ -322,6 +341,38 @@ function countByPredicate(predicate) {
   );
 }
 
+function paymentRuleText(summary = state.dashboard?.summary || {}) {
+  const amount = summary.paymentPerTask || 225;
+  if (summary.paymentCutoff) {
+    return `This adds up tasks that are currently Ready to Deliver or Delivered and were updated after July 29, 2026. Each one counts as $${amount}. Your Payments page has the final amount.`;
+  }
+  return `This adds up every task that is currently Ready to Deliver or Delivered. Each one counts as $${amount}. Your Payments page has the final amount.`;
+}
+
+function renderProjectTabs() {
+  elements.projectTabs.innerHTML = state.projects
+    .map(
+      (project) => `
+        <button
+          type="button"
+          class="project-tab${project.key === state.projectKey ? " active" : ""}"
+          data-project-key="${escapeHtml(project.key)}"
+          role="tab"
+          aria-selected="${project.key === state.projectKey ? "true" : "false"}"
+        >${escapeHtml(project.shortName || project.name)}</button>
+      `
+    )
+    .join("");
+
+  elements.projectTabs.querySelectorAll(".project-tab").forEach((button) => {
+    button.addEventListener("click", () => {
+      switchProject(button.dataset.projectKey).catch((err) =>
+        showMessage(err.message || "Could not load that project.", "error")
+      );
+    });
+  });
+}
+
 function renderSummary() {
   const summary = state.dashboard?.summary || {};
   const total = summary.total || 0;
@@ -352,12 +403,7 @@ function renderSummary() {
     .map(({ key, label, sub, value, accent }) => {
       const isActive =
         state.quickFilter === key || (key === "all" && !state.quickFilter);
-      const paymentHelp =
-        key === "paid"
-          ? `This adds up tasks that are currently Ready to Deliver or Delivered and were updated after July 29, 2026. Each one counts as $${
-              summary.paymentPerTask || 225
-            }. Your Payments page has the final amount.`
-          : "";
+      const paymentHelp = key === "paid" ? paymentRuleText(summary) : "";
       return `
         <button type="button" class="metric metric-button accent-${accent}${
         isActive ? " active" : ""
@@ -627,6 +673,19 @@ function stopGeneratedAtTicker() {
   generatedAtTicker = null;
 }
 
+function renderFaq() {
+  const summary = state.dashboard?.summary || {};
+  const amount = summary.paymentPerTask || 225;
+  if (elements.faqPayNumber) {
+    elements.faqPayNumber.textContent = `It adds $${amount} for every task that meets this project's payment rule. Check your Payments page for the final amount in your account.`;
+  }
+  if (elements.faqQualifyingTasks) {
+    elements.faqQualifyingTasks.textContent = summary.paymentCutoff
+      ? "A task counts once if it is currently Ready to Deliver or Delivered and was updated after July 29, 2026."
+      : "Every task that is currently Ready to Deliver or Delivered counts once, no matter when it reached that stage.";
+  }
+}
+
 function renderTable() {
   const tasks = sortedTasks(filteredTasks());
   const total = state.dashboard?.tasks?.length || 0;
@@ -667,7 +726,7 @@ function renderTable() {
           <td>
             ${
               task.paymentEligible
-                ? `<span class="pill green" title="Estimated payment: current stage is RTD or Delivered after July 29, 2026">${escapeHtml(
+                ? `<span class="pill green" title="${escapeHtml(paymentRuleText())}">${escapeHtml(
                     formatCurrency(task.paymentAmount)
                   )}</span>`
                 : '<span class="muted-cell">—</span>'
@@ -714,20 +773,29 @@ function getActivityStorage() {
   return null;
 }
 
+function activityStorageKey() {
+  return `${ACTIVITY_STORAGE_KEY}:${state.projectKey}`;
+}
+
+function resetActivityState() {
+  state.previousTaskSnapshot = null;
+  state.latestActivity = [];
+  state.activityFromThisRefresh = false;
+  state.activityReady = false;
+  state.activityBaselineJustCreated = false;
+}
+
 function loadActivityState() {
+  resetActivityState();
   const storage = getActivityStorage();
   if (!storage) return;
   try {
-    const raw = storage.getItem(ACTIVITY_STORAGE_KEY);
+    const raw = storage.getItem(activityStorageKey());
     if (!raw) return;
     const parsed = JSON.parse(raw);
     const snapshotVersion = parsed.snapshotVersion ?? 1;
     if (snapshotVersion !== ACTIVITY_SNAPSHOT_VERSION) {
-      state.previousTaskSnapshot = null;
-      state.latestActivity = [];
-      state.activityFromThisRefresh = false;
-      state.activityReady = false;
-      state.activityBaselineJustCreated = false;
+      resetActivityState();
       return;
     }
     if (parsed.previousTaskSnapshot) {
@@ -749,7 +817,7 @@ function saveActivityState() {
   if (!storage) return;
   try {
     storage.setItem(
-      ACTIVITY_STORAGE_KEY,
+      activityStorageKey(),
       JSON.stringify({
         snapshotVersion: ACTIVITY_SNAPSHOT_VERSION,
         previousTaskSnapshot: state.previousTaskSnapshot,
@@ -919,7 +987,10 @@ function renderActivity() {
 
 function renderDashboard() {
   elements.dashboard.hidden = false;
+  elements.projectContent.hidden = false;
   if (elements.mastheadMeta) elements.mastheadMeta.hidden = false;
+  renderProjectTabs();
+  applyBranding(true);
   renderGeneratedAt();
   startGeneratedAtTicker();
   state.quickFilter = null;
@@ -930,7 +1001,32 @@ function renderDashboard() {
   renderFilters();
   renderSortIndicators();
   renderTable();
+  renderFaq();
   updateClearFilterButton();
+}
+
+async function loadProjects() {
+  const data = await request("/api/projects");
+  state.projects = Array.isArray(data.projects) ? data.projects : [];
+  if (!state.projects.some((project) => project.key === state.projectKey)) {
+    state.projectKey = state.projects[0]?.key || "ivy";
+  }
+  renderProjectTabs();
+}
+
+async function switchProject(projectKey) {
+  if (!projectKey || projectKey === state.projectKey) return;
+  if (!state.projects.some((project) => project.key === projectKey)) {
+    throw new Error("Unknown project.");
+  }
+
+  state.projectKey = projectKey;
+  state.dashboard = null;
+  loadActivityState();
+  elements.projectContent.hidden = true;
+  renderProjectTabs();
+  applyBranding(true);
+  await fetchProject({ silent: true });
 }
 
 async function loadStatus({ autoFetch = false } = {}) {
@@ -1046,6 +1142,7 @@ async function fetchProject({ silent = false } = {}) {
 
   if (firstLoad && elements.loadingState) {
     elements.loadingState.hidden = false;
+    elements.projectContent.hidden = true;
   }
   if (refreshButton) {
     refreshButton.disabled = true;
@@ -1055,11 +1152,12 @@ async function fetchProject({ silent = false } = {}) {
   try {
     const data = await request("/api/dashboard", {
       method: "POST",
-      body: JSON.stringify({}),
+      body: JSON.stringify({ projectKey: state.projectKey }),
     });
     state.connected = true;
-    renderConnection(state.profile);
     state.dashboard = data;
+    state.projectKey = data.project?.key || state.projectKey;
+    renderConnection(state.profile);
     renderDashboard();
     if (data.historyWarning) {
       showMessage(data.historyWarning);
@@ -1180,5 +1278,10 @@ elements.activityList?.addEventListener("click", handleCopyIdClick);
   control.addEventListener("change", onChange);
 });
 
-loadActivityState();
-loadStatus({ autoFetch: true }).catch((err) => showMessage(err.message, "error"));
+async function initialize() {
+  await loadProjects();
+  loadActivityState();
+  await loadStatus({ autoFetch: true });
+}
+
+initialize().catch((err) => showMessage(err.message, "error"));
