@@ -1125,8 +1125,10 @@ async function fetchProject({ silent = false } = {}) {
   const firstLoad = !state.dashboard;
 
   if (firstLoad && elements.loadingState) {
+    elements.dashboard.hidden = false;
     elements.loadingState.hidden = false;
     elements.projectContent.hidden = true;
+    renderProjectTabs();
   }
   if (refreshButton) {
     refreshButton.disabled = true;
