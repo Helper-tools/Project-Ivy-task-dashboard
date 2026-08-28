@@ -141,8 +141,6 @@ const elements = {
   copyCount: document.querySelector("#copy-count"),
   clearFiltersButton: document.querySelector("#clear-filters-button"),
   taskTable: document.querySelector("#task-table"),
-  faqPayNumber: document.querySelector("#faq-pay-number"),
-  faqQualifyingTasks: document.querySelector("#faq-qualifying-tasks"),
 };
 
 function escapeHtml(value) {
@@ -673,19 +671,6 @@ function stopGeneratedAtTicker() {
   generatedAtTicker = null;
 }
 
-function renderFaq() {
-  const summary = state.dashboard?.summary || {};
-  const amount = summary.paymentPerTask || 225;
-  if (elements.faqPayNumber) {
-    elements.faqPayNumber.textContent = `It adds $${amount} for every task that meets this project's payment rule. Check your Payments page for the final amount in your account.`;
-  }
-  if (elements.faqQualifyingTasks) {
-    elements.faqQualifyingTasks.textContent = summary.paymentCutoff
-      ? "A task counts once if it is currently Ready to Deliver or Delivered and was updated after July 29, 2026."
-      : "Every task that is currently Ready to Deliver or Delivered counts once, no matter when it reached that stage.";
-  }
-}
-
 function renderTable() {
   const tasks = sortedTasks(filteredTasks());
   const total = state.dashboard?.tasks?.length || 0;
@@ -1001,7 +986,6 @@ function renderDashboard() {
   renderFilters();
   renderSortIndicators();
   renderTable();
-  renderFaq();
   updateClearFilterButton();
 }
 

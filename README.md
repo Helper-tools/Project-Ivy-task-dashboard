@@ -26,7 +26,8 @@ Open [http://localhost:4173](http://localhost:4173), select **Login**, and sign 
 - Quick groups for accepted tasks, tasks in review, and tasks needing action
 - Separate Ivy and Roadhouse tabs
 - Project-specific estimated pay for Ready to Deliver and Delivered tasks
-- Hover help and a built-in FAQ explaining the payment estimate and local login
+- Hover help for the payment estimate
+- The team's Slack FAQ for payments, repo access, offline tasks, referrals, project access, reviewer selection, and Yukon work authorization
 - Copyable filtered task lists
 
 The pay card counts each qualifying task once at `$225`. Ivy only counts qualifying tasks updated after July 29, 2026. Roadhouse counts every task currently in Ready to Deliver or Delivered. Handshake's Payments page remains the source of truth for posted earnings.

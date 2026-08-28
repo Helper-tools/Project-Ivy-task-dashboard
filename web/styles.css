@@ -1040,6 +1040,12 @@ tbody tr:hover .copy-id-button {
   font-size: 18px;
 }
 
+.faq-section .faq-intro {
+  margin: -4px 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .faq-list {
   border-top: 1px solid var(--line);
 }
@@ -1066,6 +1072,34 @@ tbody tr:hover .copy-id-button {
   color: var(--ink-soft);
   font-size: 13px;
   line-height: 1.55;
+}
+
+.faq-list p + p {
+  margin-top: -7px;
+}
+
+.faq-list ul {
+  max-width: 820px;
+  margin: -2px 0 14px 38px;
+  padding: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.faq-list li + li {
+  margin-top: 6px;
+}
+
+.faq-list a {
+  color: var(--brand-strong);
+  font-weight: 600;
+}
+
+.faq-list code {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 12px;
 }
 
 .footnote {
